@@ -15,7 +15,7 @@
 
 (function () {
     "use strict";
-    const src = `https://lillybluehair.github.io/Markings/marking.js?v=${Date.now()}`;
+    const src = `https://lillybluehair.github.io/BCMarkings/src/marking.js?v=${Date.now()}`;
     if (typeof markings_loaded === "undefined") {
         console.log("loading Markings");
         const script = document.createElement("script");
