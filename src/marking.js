@@ -341,13 +341,13 @@
 					{ DrawingTop: { "": 300 }, DrawingLeft: { "": 73 }, FixedPosition: false },
 					"Bodymarkings"
 				);
-				drawImage("https://lillybluehair.github.io/Markings/Luke.png", X, Y, {
+				drawImage("https://lillybluehair.github.io/Markings/Images/Luke.png", X, Y, {
 					Alpha: 1,
 					Invert: false,
 					Mirror: false,
 					BlendingMode: "source-over",
 				});
-				drawImageBlink("https://lillybluehair.github.io/Markings/Luke.png", X, Y, {
+				drawImageBlink("https://lillybluehair.github.io/Markings/Images/Luke.png", X, Y, {
 					Alpha: 1,
 					Invert: false,
 					Mirror: false,
