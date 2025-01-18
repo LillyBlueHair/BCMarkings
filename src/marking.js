@@ -317,7 +317,7 @@
     mod.hookFunction("CharacterAppearanceSortLayers", 30, (args, next) => {
         let layers = next(args);
         let C = args[0];
-        if (C.MemberNumber || !playerList.includes(C.MemberNumber)) return layers;
+        if (!C.MemberNumber || !playerList.includes(C.MemberNumber)) return layers;
         layers.push({Name: "markingLilly", Priority: 9.55555});
         return AssetLayerSort(layers);
     });
