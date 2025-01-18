@@ -1,0 +1,17 @@
+{
+    "name": "marking",
+    "version": "1.0.0",
+    "description": "marking extension for BC",
+    "main": "index.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Lilly",
+    "license": "ISC",
+    "dependencies": {
+      "bc-stubs": "^106.0.0",
+      "bondage-club-mod-sdk": "^1.2.0",
+      "typescript": "^5.5.3",
+      "typescript-eslint": "^7.16.1"
+    }
+  }
