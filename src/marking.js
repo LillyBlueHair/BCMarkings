@@ -322,6 +322,10 @@
         return AssetLayerSort(layers);
     });
 
+	mod.patchFunction("GLDrawLoadImage", {
+        "Img.src = url;": 'Img.crossOrigin = "Anonymous";\n\t\tImg.src = url;',
+    });
+
 	mod.hookFunction("CommonDrawAppearanceBuild", 9999, (args, next) => {
         let C = args[0];
 		let {clearRect,
@@ -335,6 +339,7 @@
 		// Loop through all layers in the character appearance
 		for (const layer of C.AppearanceLayers) {
 			if (layer.Name && layer.Name == "markingLilly") {
+				console.log("markingLilly");
 				let { X, Y, fixedYOffset } = CommonDrawComputeDrawingCoordinates(
 					C,
 					{ FixedPosition: false },
@@ -634,6 +639,5 @@
 				CommonCallFunctionByNameWarn(`Assets${asset.Group.Name}${asset.Name}AfterDraw`, DrawingData);
 			}
 		}
-		C.AppearanceLayers.splice(C.AppearanceLayers.indexOf("markingLilly"), 1);
 	});
 })();
