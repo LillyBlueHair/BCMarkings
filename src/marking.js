@@ -339,7 +339,6 @@
 		// Loop through all layers in the character appearance
 		for (const layer of C.AppearanceLayers) {
 			if (layer.Name && layer.Name == "markingLilly") {
-				console.log("markingLilly");
 				let { X, Y, fixedYOffset } = CommonDrawComputeDrawingCoordinates(
 					C,
 					{ FixedPosition: false },
