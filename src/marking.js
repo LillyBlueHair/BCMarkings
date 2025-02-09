@@ -312,9 +312,16 @@
     }
 
     function drawMenuElements() {
-        // Draw the player & controls
         DrawCharacter(Player, 50, 50, 0.9);
         DrawButton(1815, 75, 90, 90, "", "White", "Icons/Exit.png");
+        DrawButton(231, 820, 90, 90, "", "White", "Icons/Naked.png");
+        MainCanvas.textAlign = "left";
+        DrawText("- LMK Settings -", 500, 125, "Black", "Gray");
+        if(!playerList.includes(Player.MemberNumber)){
+            DrawText("You are not marked.", 500, 200, "Red", "Gray");
+            DrawText("Please reach out to Luke (131937) if you wish to change that", 500, 300, "Red", "Gray");
+            DrawText("or to Lilly (35598) if you did talk to Luke already", 500, 350, "Red", "Gray");
+        }
 
         MainCanvas.textAlign = "left";
         if (PreferenceMessage != "") DrawText(PreferenceMessage, 1400, 125, "Red", "Black");
@@ -368,11 +375,6 @@
             exit: PreferenceSubscreenLMKSettingsExit,
         });
         function PreferenceSubscreenLMKSettingsRun() {
-            DrawCharacter(Player, 50, 50, 0.9);
-            DrawButton(1815, 75, 90, 90, "", "White", "Icons/Exit.png");
-            DrawButton(231, 820, 90, 90, "", "White", "Icons/Naked.png");
-            MainCanvas.textAlign = "left";
-            DrawText("- LMK Settings -", 500, 125, "Black", "Gray");
             drawMenuElements();
         }
         function PreferenceSubscreenLMKSettingsExit() {
@@ -398,7 +400,6 @@
                     PlayerNaked = true;
                 }
             }
-
             for (let i = 0; i < menuElements["LMKSettings"].length; i++) {
                 if (menuElements["LMKSettings"][i].type === "Input") {
                     Player.OnlineSettings.LMK[menuElements["LMKSettings"][i].setting] = ElementValue(menuElements["LMKSettings"][i].identifier);
@@ -410,10 +411,12 @@
         function PreferenceSubscreenLMKSettingsLoad() {
             CharacterAppearanceBackup = CharacterAppearanceStringify(Player);
             console.log("Loading LMK Settings");
-            addMenuInput(200, "Input Offset on X-Axis (Number, can be negative):", "positionX", "InputPositionX", "", 250);
-            addMenuInput(200, "Input Offset on Y-Axis (Number, can be negative):", "positionY", "InputPositionY", "", 250);
-            addMenuInput(200, "Input Opacity in % (1-100):", "opacity", "InputOpacity", "", 250);
-            addMenuInput(200, "Input Layering Priority (Number, Default 9.5):", "priority", "InputPriority", "", 250);
+            if (playerList.includes(Player.MemberNumber)) {
+                addMenuInput(200, "Input Offset on X-Axis (Number, can be negative):", "positionX", "InputPositionX", "", 250);
+                addMenuInput(200, "Input Offset on Y-Axis (Number, can be negative):", "positionY", "InputPositionY", "", 250);
+                addMenuInput(200, "Input Opacity in % (1-100):", "opacity", "InputOpacity", "", 250);
+                addMenuInput(200, "Input Layering Priority (Number, Default 9.5):", "priority", "InputPriority", "", 250);
+            }
         }
     }
 
