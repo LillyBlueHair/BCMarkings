@@ -1,6 +1,6 @@
 (function () {
-	"use strict";
-	var bcModSdk = (function () {
+    "use strict";
+    var bcModSdk = (function () {
 		"use strict";
 		const o = "1.2.0";
 		function e(o) {
@@ -303,340 +303,544 @@
 			y
 		);
 	})();
-	const MOD_NAME = "LMK";
-	const MOD_FULL_NAME = "Lillys Marking";
-	const MOD_VERSION = "0.1.0";
-	const MOD_REPOSITORY = "";
-	const mod = bcModSdk.registerMod({
-		name: MOD_NAME,
-		fullName: MOD_FULL_NAME,
-		version: MOD_VERSION,
-		repository: MOD_REPOSITORY,
-	});
-    const playerList = [35982,33048,142706,16361,167320,132756,121031,143373,137523,94934,178559,27835,172579,132030];
-    mod.hookFunction("CharacterAppearanceSortLayers", 30, (args, next) => {
-        let layers = next(args);
+    const MOD_NAME = "LMK";
+    const MOD_FULL_NAME = "Lillys Markings";
+    const MOD_VERSION = "0.1.0";
+    const MOD_REPOSITORY = "";
+    const mod = bcModSdk.registerMod({
+        name: MOD_NAME,
+        fullName: MOD_FULL_NAME,
+        version: MOD_VERSION,
+        repository: MOD_REPOSITORY,
+    });
+    let menuElements = {
+        LMKSettings: [],
+    };
+    let loggedIn = false;
+    
+	loginListener();
+    async function loginListener() {
+        while ((!window.CurrentScreen || window.CurrentScreen == "Login") && !loggedIn) {
+            await new Promise((r) => setTimeout(r, 2000));
+        }
+
+        loggedIn = true;
+
+        if (!Player.OnlineSettings.LMK) {
+            console.log("No LMK settings found, initializing with default values");
+            Player.OnlineSettings.LMK = {
+                positionX: 0,
+                positionY: 0,
+                opacity: 100,
+                priority: 9.5,
+            };
+        }
+
+        if (!Player.OnlineSharedSettings.LMK) {
+            Player.OnlineSharedSettings.LMK = Player.OnlineSettings.LMK;
+        }
+    }
+
+    function addMenuInput(width, text, setting, identifier, hint, xModifier = 0, yModifier = 0) {
+        menuElements["LMKSettings"].push({
+            type: "Input",
+            yPos: getNewYPos(),
+            width: width,
+            text: text,
+            setting: setting,
+            identifier: identifier,
+            hint: hint,
+            xModifier: xModifier,
+            yModifier: yModifier,
+        });
+        ElementCreateInput(identifier, "text", Player.OnlineSettings.LMK[setting], "100");
+    }
+
+    function drawMenuElements() {
+        // Draw the player & controls
+        DrawCharacter(Player, 50, 50, 0.9);
+        DrawButton(1815, 75, 90, 90, "", "White", "Icons/Exit.png");
+
+        MainCanvas.textAlign = "left";
+        if (PreferenceMessage != "") DrawText(PreferenceMessage, 1400, 125, "Red", "Black");
+        // DrawText("LMK " + ubcSettingCategoryLabels[UBCPreferenceSubscreen] + " - Click on a setting to get more info", 500, 125, "Black", "Gray");
+
+        let currentElement;
+        let MENU_ELEMENT_X_OFFSET = 1050;
+        for (let i = 0; i < menuElements["LMKSettings"].length; i++) {
+            currentElement = menuElements["LMKSettings"][i];
+            MainCanvas.textAlign = "left";
+            let textColor = "Black";
+            if (eval(currentElement?.grayedOutReference) === true) textColor = "Gray";
+            if (MouseIn(500, currentElement.yPos - 18, MENU_ELEMENT_X_OFFSET - 525, 36)) textColor = "Yellow";
+            DrawText(currentElement.text, 500, currentElement.yPos, textColor, "Gray");
+            switch (currentElement.type) {
+                case "Input":
+                    ElementPosition(
+                        currentElement.identifier,
+                        MENU_ELEMENT_X_OFFSET + currentElement.xModifier + currentElement.width / 2,
+                        currentElement.yPos,
+                        currentElement.width
+                    );
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    function getNewYPos() {
+        let yPos = 200;
+        if (menuElements["LMKSettings"].length > 0) {
+            let lastElement = menuElements["LMKSettings"][menuElements["LMKSettings"].length - 1];
+            yPos = lastElement.yPos + lastElement.yModifier + 75;
+        }
+        return yPos;
+    }
+	settingsPage();
+
+    async function settingsPage() {
+		let CharacterAppearanceBackup;
+        await waitFor(() => !!PreferenceSubscreenList);
+        PreferenceRegisterExtensionSetting({
+            Identifier: "LMK",
+            ButtonText: "LMK Settings",
+            Image: undefined,
+            load: PreferenceSubscreenLMKSettingsLoad,
+            click: PreferenceSubscreenLMKSettingsClick,
+            run: PreferenceSubscreenLMKSettingsRun,
+            exit: PreferenceSubscreenLMKSettingsExit,
+        });
+        function PreferenceSubscreenLMKSettingsRun() {
+            // draw actually usefull stuff
+			CharacterAppearanceNaked(Player);
+			// CharacterRefresh(Player, false);
+            DrawCharacter(Player, 50, 50, 0.9);
+            DrawButton(1815, 75, 90, 90, "", "White", "Icons/Exit.png");
+            MainCanvas.textAlign = "left";
+            DrawText("- LMK Settings -", 500, 125, "Black", "Gray");
+
+            for (let i = 0; i < menuElements["LMKSettings"].length; i++) {
+                if (menuElements["LMKSettings"][i].type === "Input") {
+                    Player.OnlineSettings.LMK[menuElements["LMKSettings"][i].setting] = ElementValue(menuElements["LMKSettings"][i].identifier);
+                }
+            }
+            Player.OnlineSharedSettings.LMK = Player.OnlineSettings.LMK || {};
+            drawMenuElements();
+        }
+        function PreferenceSubscreenLMKSettingsExit() {
+            // implement the exit functionality
+            for (let i = 0; i < menuElements["LMKSettings"].length; i++) {
+                if (menuElements["LMKSettings"][i].type === "Input") {
+                    ElementRemove(menuElements["LMKSettings"][i].identifier);
+                }
+            }
+            Player.OnlineSharedSettings.LMK = Player.OnlineSettings.LMK || {};
+            menuElements["LMKSettings"] = [];
+			CharacterAppearanceRestore(Player, CharacterAppearanceBackup);
+			CharacterRefresh(Player, false);
+            PreferenceSubscreenExtensionsClear();
+        }
+        function PreferenceSubscreenLMKSettingsClick() {
+            // implement the click functionality
+            if (MouseIn(1815, 75, 90, 90)) PreferenceSubscreenLMKSettingsExit();
+            DrawCharacter(Player, 50, 50, 0.9);
+        }
+        function PreferenceSubscreenLMKSettingsLoad() {
+            // implement the load functionality
+			CharacterAppearanceBackup = CharacterAppearanceStringify(Player);
+            console.log("Loading LMK Settings");
+            addMenuInput(200, "Input Offset on X-Axis (Number, can be negative):", "positionX", "InputPositionX", "", 250);
+            addMenuInput(200, "Input Offset on Y-Axis (Number, can be negative):", "positionY", "InputPositionY", "", 250);
+            addMenuInput(200, "Input Opacity in % (1-100):", "opacity", "InputOpacity", "", 250);
+            addMenuInput(200, "Input Layering Priority (Number, Default 9.5):", "priority", "InputPriority", "", 250);
+        }
+    }
+
+    function sleep(ms) {
+        // eslint-disable-next-line no-promise-executor-return
+        return new Promise((resolve) => window.setTimeout(resolve, ms));
+    }
+    async function waitFor(func, cancelFunc = () => false) {
+        while (!func()) {
+            if (cancelFunc()) {
+                return false;
+            }
+            // eslint-disable-next-line no-await-in-loop
+            await sleep(10);
+        }
+        return true;
+    }
+
+    const playerList = [35982, 33048, 142706, 16361, 167320, 132756, 121031, 143373, 137523, 94934, 178559, 27835, 172579, 132030];
+
+	
+
+    mod.hookFunction("CharacterAppearanceSortLayers", 1, (args, next) => {
         let C = args[0];
-        if (!C.MemberNumber || !playerList.includes(C.MemberNumber)) return layers;
-        layers.push({Name: "markingLilly", Priority: 9.55555});
+        const groupAlphas = {};
+        const layers = C.DrawAppearance.reduce((layersAcc, item) => {
+            const asset = item.Asset;
+            // Only include layers for visible assets
+            if (asset.Visible && CharacterAppearanceVisible(C, asset.Name, asset.Group.Name) && InventoryChatRoomAllow(asset.Category)) {
+                // Check if we need to draw a different variation (from type property)
+                const typeRecord = item.Property && item.Property.TypeRecord;
+                const layersToDraw = asset.Layer.filter((layer) => CharacterAppearanceIsLayerVisible(C, layer, asset, typeRecord)).map((layer) => {
+                    const drawLayer = { ...layer };
+                    // Store any group-level alpha mask definitions
+                    drawLayer.Alpha.forEach((alpha) => {
+                        if (alpha.Group && (!alpha.AllowTypes || !CharacterAppearanceAllowForTypes(alpha.AllowTypes, typeRecord))) {
+                            alpha.Group.forEach((groupName) => {
+                                groupAlphas[groupName] = groupAlphas[groupName] || [];
+                                groupAlphas[groupName].push({ Pose: alpha.Pose, Masks: alpha.Masks, AllowTypes: null });
+                            });
+                        }
+                    });
+                    // If the item has an OverridePriority property, it completely overrides the layer priority
+                    if (item.Property) {
+                        if (typeof item.Property.OverridePriority === "number") drawLayer.Priority = item.Property.OverridePriority;
+                        else if (CommonIsObject(item.Property.OverridePriority) && typeof item.Property.OverridePriority[layer.Name] === "number") {
+                            drawLayer.Priority = item.Property.OverridePriority[layer.Name];
+                        }
+                    }
+                    return drawLayer;
+                });
+                layersAcc.push(...layersToDraw);
+            }
+            return layersAcc;
+        },  ([]));
+
+        // Run back over the layers to apply the group-level alpha mask definitions to the appropriate layers
+        layers.forEach((layer) => {
+            // If the layer has a HideAs proxy group name, apply those alphas rather than the actual group alphas
+            const groupName = (layer.HideAs && layer.HideAs.Group) || layer.Asset.Group.Name;
+            if (groupAlphas[groupName]) {
+                layer.GroupAlpha = [...groupAlphas[groupName]];
+            } else {
+                layer.GroupAlpha = [];
+            }
+        });
+        if (!playerList.includes(C.MemberNumber)) return AssetLayerSort(layers);
+        let priority = 9.5;
+        if (C && C.OnlineSharedSettings && C.OnlineSharedSettings.LMK) {
+            priority = parseInt(C.OnlineSharedSettings.LMK.priority) || 9.5;
+            if (Number.isNaN(priority)) priority = 9.5;
+        }
+        layers.push({ Name: "markingLilly", Priority: priority, Asset: { Group: { Name: "BodymarkingsLilly" } } });
         return AssetLayerSort(layers);
     });
 
-	mod.patchFunction("GLDrawLoadImage", {
+    mod.patchFunction("GLDrawLoadImage", {
         "Img.src = url;": 'Img.crossOrigin = "Anonymous";\n\t\tImg.src = url;',
     });
 
-	mod.hookFunction("CommonDrawAppearanceBuild", 9999, (args, next) => {
+    // @ts-ignore
+    mod.hookFunction("CommonDrawAppearanceBuild", 9999, (args, next) => {
         let C = args[0];
-		let {clearRect,
-        clearRectBlink,
-        drawCanvas,
-        drawCanvasBlink,
-        drawImage,
-        drawImageBlink,
-        drawImageColorize,
-        drawImageColorizeBlink} = args[1];
-		// Loop through all layers in the character appearance
-		for (const layer of C.AppearanceLayers) {
-			if (layer.Name && layer.Name == "markingLilly") {
-				let { X, Y, fixedYOffset } = CommonDrawComputeDrawingCoordinates(
-					C,
-					{ FixedPosition: false },
-					{ DrawingTop: { "": 290 }, DrawingLeft: { "": 74 }, FixedPosition: false },
-					"Bodymarkings"
-				);
-				drawImage("https://lillybluehair.github.io/BCMarkings/Images/Luke.png", X, Y, {
-					Alpha: 1,
-					Invert: false,
-					Mirror: false,
-					BlendingMode: "source-over",
-				});
-				drawImageBlink("https://lillybluehair.github.io/BCMarkings/Images/Luke.png", X, Y, {
-					Alpha: 1,
-					Invert: false,
-					Mirror: false,
-					BlendingMode: "source-over",
-				});
-				continue;
-			}
-			const asset = layer.Asset;
-			const group = asset.Group;
-			let item = C.Appearance.find((i) => i.Asset === asset);
-			let groupName = asset.DynamicGroupName;
+        let { clearRect, clearRectBlink, drawCanvas, drawCanvasBlink, drawImage, drawImageBlink, drawImageColorize, drawImageColorizeBlink } = args[1];
+        // Loop through all layers in the character appearance
+        for (const layer of C.AppearanceLayers) {
+            if (layer.Name && layer.Name == "markingLilly") {
+                let { X, Y, fixedYOffset } = CommonDrawComputeDrawingCoordinates(
+                    C,
+                    // @ts-ignore
+                    { FixedPosition: false },
+                    { DrawingTop: { "": 290 }, DrawingLeft: { "": 74 }, FixedPosition: false },
+                    "Bodymarkings"
+                );
+                let offsetX = 0;
+                let offsetY = 0;
+                let opacity = 100;
+                if (C && C.OnlineSharedSettings && C.OnlineSharedSettings.LMK) {
+                    offsetX = parseInt(C.OnlineSharedSettings.LMK.positionX) || 0;
+                    if (Number.isNaN(offsetX)) offsetX = 0;
+                    offsetY = parseInt(C.OnlineSharedSettings.LMK.positionY) || 0;
+                    if (Number.isNaN(offsetY)) offsetY = 0;
+                    opacity = parseInt(C.OnlineSharedSettings.LMK.opacity) || 0;
+                    if (Number.isNaN(opacity) || opacity < 1 || opacity > 100) opacity = 100;
+                }
+                drawImage("https://lillybluehair.github.io/BCMarkings/Images/Luke.png", X + offsetX, Y + offsetY, {
+                    Alpha: opacity / 100,
+                    Invert: false,
+                    Mirror: false,
+                    BlendingMode: "source-over",
+                });
+                drawImageBlink("https://lillybluehair.github.io/BCMarkings/Images/Luke.png", X + offsetX, Y + offsetY, {
+                    Alpha: opacity / 100,
+                    Invert: false,
+                    Mirror: false,
+                    BlendingMode: "source-over",
+                });
+                continue;
+            }
+            const asset = layer.Asset;
+            const group = asset.Group;
+            let item = C.Appearance.find((i) => i.Asset === asset);
+            let groupName = asset.DynamicGroupName;
 
-			// If the layer belongs to a specific parent group, grab the group's current asset name to use it as a suffix
-			let parentAssetName = "";
-			if (layer.ParentGroupName) {
-				const parentItem = C.Appearance.find((Item) => Item.Asset.Group.Name === layer.ParentGroupName);
-				if (parentItem) parentAssetName = parentItem.Asset.Name;
-			}
+            // If the layer belongs to a specific parent group, grab the group's current asset name to use it as a suffix
+            let parentAssetName = "";
+            if (layer.ParentGroupName) {
+                const parentItem = C.Appearance.find((Item) => Item.Asset.Group.Name === layer.ParentGroupName);
+                if (parentItem) parentAssetName = parentItem.Asset.Name;
+            }
 
-			// If there's a pose style we must add (items take priority over groups, layers may override completely)
-			let pose = CommonDrawResolveAssetPose(C, layer);
+            // If there's a pose style we must add (items take priority over groups, layers may override completely)
+            let pose = CommonDrawResolveAssetPose(C, layer);
 
-			// Check if we need to draw a different expression (for facial features)
-			const currentExpression = CommonDrawResolveLayerExpression(C, item, layer);
-			const expressionSegment = currentExpression ? currentExpression + "/" : "";
-			const blinkExpressionSegment = (asset.OverrideBlinking ? !group.DrawingBlink : group.DrawingBlink)
-				? "Closed/"
-				: expressionSegment;
+            // Check if we need to draw a different expression (for facial features)
+            const currentExpression = CommonDrawResolveLayerExpression(C, item, layer);
+            const expressionSegment = currentExpression ? currentExpression + "/" : "";
+            const blinkExpressionSegment = (asset.OverrideBlinking ? !group.DrawingBlink : group.DrawingBlink) ? "Closed/" : expressionSegment;
 
-			// Find the X and Y position to draw on
-			let { X, Y, fixedYOffset } = CommonDrawComputeDrawingCoordinates(C, asset, layer, groupName);
+            // Find the X and Y position to draw on
+            let { X, Y, fixedYOffset } = CommonDrawComputeDrawingCoordinates(C, asset, layer, groupName);
 
-			CommonDrawApplyLayerAlphaMasks(C, layer, fixedYOffset, clearRect, clearRectBlink);
+            CommonDrawApplyLayerAlphaMasks(C, layer, fixedYOffset, clearRect, clearRectBlink);
 
-			// Check if we need to draw a different variation (from type property)
-			const typeRecord = (item.Property && item.Property.TypeRecord) || {};
-			let layerSegment = "";
-			let layerType = "";
-			if (layer.CreateLayerTypes.length > 0) {
-				layerType = layer.CreateLayerTypes.map((k) => `${k}${typeRecord[k] || 0}`).join("");
-			}
-			if (layer.Name) layerSegment = layer.Name;
+            // Check if we need to draw a different variation (from type property)
+            const typeRecord = (item.Property && item.Property.TypeRecord) || {};
+            let layerSegment = "";
+            let layerType = "";
+            if (layer.CreateLayerTypes.length > 0) {
+                layerType = layer.CreateLayerTypes.map((k) => `${k}${typeRecord[k] || 0}`).join("");
+            }
+            if (layer.Name) layerSegment = layer.Name;
 
-			let opacity =
-				item.Property && typeof item.Property.Opacity === "number" ? item.Property.Opacity : layer.Opacity;
-			if (item.Property && CommonIsArray(item.Property.Opacity)) {
-				let Pos = 0;
-				if (CommonIsArray(item.Asset.Layer)) {
-					for (let P = 0; P < item.Asset.Layer.length && P < item.Property.Opacity.length; P++)
-						if (layer.Name == item.Asset.Layer[P].Name) Pos = P;
-				}
-				if (CommonIsNumeric(item.Property.Opacity[Pos])) {
-					opacity = item.Property.Opacity[Pos];
-				}
-			}
-			let blendingMode = layer.BlendingMode;
-			opacity = Math.min(layer.MaxOpacity, Math.max(layer.MinOpacity, opacity));
-			/** @type {RectTuple[]} */
-			let masks = layer.GroupAlpha.filter(({ Pose: P }) => !P || !!CommonDrawFindPose(C, P)).reduce(
-				(Acc, { Masks }) => {
-					Acc.push(...Masks);
-					return Acc;
-				},
-				[]
-			);
+            let opacity = item.Property && typeof item.Property.Opacity === "number" ? item.Property.Opacity : layer.Opacity;
+            if (item.Property && CommonIsArray(item.Property.Opacity)) {
+                let Pos = 0;
+                if (CommonIsArray(item.Asset.Layer)) {
+                    for (let P = 0; P < item.Asset.Layer.length && P < item.Property.Opacity.length; P++) if (layer.Name == item.Asset.Layer[P].Name) Pos = P;
+                }
+                if (CommonIsNumeric(item.Property.Opacity[Pos])) {
+                    opacity = item.Property.Opacity[Pos];
+                }
+            }
+            let blendingMode = layer.BlendingMode;
+            opacity = Math.min(layer.MaxOpacity, Math.max(layer.MinOpacity, opacity));
+            /** @type {RectTuple[]} */
+            let masks = layer.GroupAlpha.filter(({ Pose: P }) => !P || !!CommonDrawFindPose(C, P)).reduce((Acc, { Masks }) => {
+                Acc.push(...Masks);
+                return Acc;
+            }, []);
 
-			// Resolve the layer color; handles color inheritance and schema validation
-			let layerColor = CommonDrawResolveLayerColor(C, item, layer, groupName);
+            // Resolve the layer color; handles color inheritance and schema validation
+            let layerColor = CommonDrawResolveLayerColor(C, item, layer, groupName);
 
-			// Before drawing hook, receives all processed data. Any of them can be overriden if returned inside an object.
-			// CAREFUL! The dynamic function should not contain heavy computations, and should not have any side effects.
-			// Watch out for object references.
-			if (asset.DynamicBeforeDraw && (!Player.GhostList || Player.GhostList.indexOf(C.MemberNumber) == -1)) {
-				/** @type {DynamicDrawingData} */
-				const DrawingData = {
-					C,
-					X,
-					Y,
-					CA: item,
-					GroupName: groupName,
-					Color: layerColor,
-					Opacity: opacity,
-					Property: item.Property,
-					A: asset,
-					G: parentAssetName,
-					AG: group,
-					L: layerSegment,
-					Pose: pose,
-					LayerType: layerType,
-					BlinkExpression: blinkExpressionSegment,
-					drawCanvas,
-					drawCanvasBlink,
-					AlphaMasks: masks,
-					PersistentData: () => AnimationPersistentDataGet(C, asset),
-				};
-				/** @type {DynamicBeforeDrawOverrides} */
-				const OverriddenData = CommonCallFunctionByNameWarn(
-					`Assets${asset.Group.Name}${asset.Name}BeforeDraw`,
-					DrawingData
-				);
-				if (typeof OverriddenData === "object") {
-					for (const key in OverriddenData) {
-						switch (key) {
-							case "Property": {
-								item.Property = OverriddenData[key];
-								break;
-							}
-							case "CA": {
-								item = OverriddenData[key];
-								break;
-							}
-							case "GroupName": {
-								groupName = OverriddenData[key];
-								break;
-							}
-							case "Color": {
-								layerColor = OverriddenData[key];
-								break;
-							}
-							case "Opacity": {
-								opacity = OverriddenData[key];
-								break;
-							}
-							case "X": {
-								X = OverriddenData[key];
-								break;
-							}
-							case "Y": {
-								Y = OverriddenData[key];
-								break;
-							}
-							case "LayerType": {
-								layerType = OverriddenData[key];
-								break;
-							}
-							case "L": {
-								layerSegment = OverriddenData[key];
-								break;
-							}
-							case "AlphaMasks": {
-								masks = OverriddenData[key];
-								break;
-							}
-							case "Pose": {
-								pose = OverriddenData[key];
-								break;
-							}
-						}
-					}
-				}
-			}
+            // Before drawing hook, receives all processed data. Any of them can be overriden if returned inside an object.
+            // CAREFUL! The dynamic function should not contain heavy computations, and should not have any side effects.
+            // Watch out for object references.
+            if (asset.DynamicBeforeDraw && (!Player.GhostList || Player.GhostList.indexOf(C.MemberNumber) == -1)) {
+                /** @type {DynamicDrawingData} */
+                const DrawingData = {
+                    C,
+                    X,
+                    Y,
+                    CA: item,
+                    GroupName: groupName,
+                    Color: layerColor,
+                    Opacity: opacity,
+                    Property: item.Property,
+                    A: asset,
+                    G: parentAssetName,
+                    AG: group,
+                    L: layerSegment,
+                    Pose: pose,
+                    LayerType: layerType,
+                    BlinkExpression: blinkExpressionSegment,
+                    drawCanvas,
+                    drawCanvasBlink,
+                    AlphaMasks: masks,
+                    PersistentData: () => AnimationPersistentDataGet(C, asset),
+                };
+                /** @type {DynamicBeforeDrawOverrides} */
+                const OverriddenData = CommonCallFunctionByNameWarn(`Assets${asset.Group.Name}${asset.Name}BeforeDraw`, DrawingData);
+                if (typeof OverriddenData === "object") {
+                    for (const key in OverriddenData) {
+                        switch (key) {
+                            case "Property": {
+                                item.Property = OverriddenData[key];
+                                break;
+                            }
+                            case "CA": {
+                                item = OverriddenData[key];
+                                break;
+                            }
+                            case "GroupName": {
+                                groupName = OverriddenData[key];
+                                break;
+                            }
+                            case "Color": {
+                                layerColor = OverriddenData[key];
+                                break;
+                            }
+                            case "Opacity": {
+                                opacity = OverriddenData[key];
+                                break;
+                            }
+                            case "X": {
+                                X = OverriddenData[key];
+                                break;
+                            }
+                            case "Y": {
+                                Y = OverriddenData[key];
+                                break;
+                            }
+                            case "LayerType": {
+                                layerType = OverriddenData[key];
+                                break;
+                            }
+                            case "L": {
+                                layerSegment = OverriddenData[key];
+                                break;
+                            }
+                            case "AlphaMasks": {
+                                masks = OverriddenData[key];
+                                break;
+                            }
+                            case "Pose": {
+                                pose = OverriddenData[key];
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
 
-			// Safeguard against a null pose
-			if (typeof pose !== "string") pose = /** @type {AssetPoseName} */ ("");
+            // Safeguard against a null pose
+            if (typeof pose !== "string") pose = /** @type {AssetPoseName} */ ("");
 
-			// Redo some checks in case BeforeDraw overrode the color back to default.
-			if (layerColor === "Default" && asset.DefaultColor) {
-				layerColor = CommonDrawResolveLayerColor(C, item, layer, groupName, layerColor);
-			}
+            // Redo some checks in case BeforeDraw overrode the color back to default.
+            if (layerColor === "Default" && asset.DefaultColor) {
+                layerColor = CommonDrawResolveLayerColor(C, item, layer, groupName, layerColor);
+            }
 
-			masks = masks.map(([x, y, w, h]) => [x, y + CanvasUpperOverflow + fixedYOffset, w, h]);
+            masks = masks.map(([x, y, w, h]) => [x, y + CanvasUpperOverflow + fixedYOffset, w, h]);
 
-			let mirrored = false;
-			let inverted = false;
-			if (asset.FixedPosition && C.IsInverted()) {
-				mirrored = !mirrored;
-				inverted = !inverted;
-			}
+            let mirrored = false;
+            let inverted = false;
+            if (asset.FixedPosition && C.IsInverted()) {
+                mirrored = !mirrored;
+                inverted = !inverted;
+            }
 
-			const itemIsLocked = !!(item.Property && item.Property.LockedBy);
+            const itemIsLocked = !!(item.Property && item.Property.LockedBy);
 
-			// Check the current pose against the assets' supported pose mapping
-			/** @type {string} */
-			let poseSegment = layer.PoseMapping[pose];
-			switch (poseSegment) {
-				case PoseType.HIDE:
-				case PoseType.DEFAULT:
-				case undefined:
-					poseSegment = "";
-					break;
-				default:
-					poseSegment += "/";
-					break;
-			}
+            // Check the current pose against the assets' supported pose mapping
+            /** @type {string} */
+            let poseSegment = layer.PoseMapping[pose];
+            switch (poseSegment) {
+                case PoseType.HIDE:
+                case PoseType.DEFAULT:
+                case undefined:
+                    poseSegment = "";
+                    break;
+                default:
+                    poseSegment += "/";
+                    break;
+            }
 
-			if (layer.HasImage && (!layer.LockLayer || itemIsLocked)) {
-				// Handle the layer's color suffix mapping, transforming it back into a named color so we still use the correct base
-				/** @type {string | undefined} */
-				let colorSuffix = undefined;
-				if (layer.ColorSuffix && layerColor) {
-					colorSuffix = layerColor[0] === "#" ? layer.ColorSuffix.HEX_COLOR : layer.ColorSuffix[layerColor];
-					if (colorSuffix && colorSuffix[0] === "#") {
-						layerColor = colorSuffix;
-						colorSuffix = undefined;
-					}
-				}
+            if (layer.HasImage && (!layer.LockLayer || itemIsLocked)) {
+                // Handle the layer's color suffix mapping, transforming it back into a named color so we still use the correct base
+                /** @type {string | undefined} */
+                let colorSuffix = undefined;
+                if (layer.ColorSuffix && layerColor) {
+                    colorSuffix = layerColor[0] === "#" ? layer.ColorSuffix.HEX_COLOR : layer.ColorSuffix[layerColor];
+                    if (colorSuffix && colorSuffix[0] === "#") {
+                        layerColor = colorSuffix;
+                        colorSuffix = undefined;
+                    }
+                }
 
-				const baseURL = `Assets/${group.Family}/${groupName}/${poseSegment}${expressionSegment}`;
-				const baseURLBlink = `Assets/${group.Family}/${groupName}/${poseSegment}${blinkExpressionSegment}`;
+                const baseURL = `Assets/${group.Family}/${groupName}/${poseSegment}${expressionSegment}`;
+                const baseURLBlink = `Assets/${group.Family}/${groupName}/${poseSegment}${blinkExpressionSegment}`;
 
-				const shouldColorize = layer.AllowColorize && layerColor && layerColor[0] === "#";
-				let colorSegment = "";
+                const shouldColorize = layer.AllowColorize && layerColor && layerColor[0] === "#";
+                let colorSegment = "";
 
-				if (shouldColorize) {
-					// The layer is colorizable and has an explicit hexcode, it needs to be drawn colorized
-					colorSegment = colorSuffix != undefined ? colorSuffix : "";
-				} else {
-					// The layer isn't colorizable, so validate that the layer color is a named color
-					// If a color suffix is specified and isn't Default, it'll completely override the final color
-					if (layerColor != null && layerColor !== "Default" && layerColor[0] !== "#") {
-						colorSegment = layerColor;
-					}
-					if (colorSuffix) {
-						colorSegment = colorSuffix !== "Default" ? colorSuffix : "";
-					}
-				}
+                if (shouldColorize) {
+                    // The layer is colorizable and has an explicit hexcode, it needs to be drawn colorized
+                    colorSegment = colorSuffix != undefined ? colorSuffix : "";
+                } else {
+                    // The layer isn't colorizable, so validate that the layer color is a named color
+                    // If a color suffix is specified and isn't Default, it'll completely override the final color
+                    if (layerColor != null && layerColor !== "Default" && layerColor[0] !== "#") {
+                        colorSegment = layerColor;
+                    }
+                    if (colorSuffix) {
+                        colorSegment = colorSuffix !== "Default" ? colorSuffix : "";
+                    }
+                }
 
-				const urlParts = [asset.Name, parentAssetName, layerType, colorSegment, layerSegment].filter((c) => c);
-				const layerURL = urlParts.join("_") + ".png";
-				if (shouldColorize) {
-					drawImageColorize(baseURL + layerURL, X, Y, {
-						HexColor: layerColor,
-						FullAlpha: asset.FullAlpha,
-						AlphaMasks: masks,
-						Alpha: opacity,
-						Invert: inverted,
-						Mirror: mirrored,
-						BlendingMode: blendingMode,
-					});
-					drawImageColorizeBlink(baseURLBlink + layerURL, X, Y, {
-						HexColor: layerColor,
-						FullAlpha: asset.FullAlpha,
-						AlphaMasks: masks,
-						Alpha: opacity,
-						Invert: inverted,
-						Mirror: mirrored,
-						BlendingMode: blendingMode,
-					});
-				} else {
-					drawImage(baseURL + layerURL, X, Y, {
-						AlphaMasks: masks,
-						Alpha: opacity,
-						Invert: inverted,
-						Mirror: mirrored,
-						BlendingMode: blendingMode,
-					});
-					drawImageBlink(baseURLBlink + layerURL, X, Y, {
-						AlphaMasks: masks,
-						Alpha: opacity,
-						Invert: inverted,
-						Mirror: mirrored,
-						BlendingMode: blendingMode,
-					});
-				}
-				//console.log(baseURL + layerURL, X, Y, { AlphaMasks: masks, Alpha: opacity, Invert: inverted, Mirror: mirrored, BlendingMode: blendingMode });
-			}
+                const urlParts = [asset.Name, parentAssetName, layerType, colorSegment, layerSegment].filter((c) => c);
+                const layerURL = urlParts.join("_") + ".png";
+                if (shouldColorize) {
+                    drawImageColorize(baseURL + layerURL, X, Y, {
+                        HexColor: layerColor,
+                        FullAlpha: asset.FullAlpha,
+                        AlphaMasks: masks,
+                        Alpha: opacity,
+                        Invert: inverted,
+                        Mirror: mirrored,
+                        BlendingMode: blendingMode,
+                    });
+                    drawImageColorizeBlink(baseURLBlink + layerURL, X, Y, {
+                        HexColor: layerColor,
+                        FullAlpha: asset.FullAlpha,
+                        AlphaMasks: masks,
+                        Alpha: opacity,
+                        Invert: inverted,
+                        Mirror: mirrored,
+                        BlendingMode: blendingMode,
+                    });
+                } else {
+                    drawImage(baseURL + layerURL, X, Y, {
+                        AlphaMasks: masks,
+                        Alpha: opacity,
+                        Invert: inverted,
+                        Mirror: mirrored,
+                        BlendingMode: blendingMode,
+                    });
+                    drawImageBlink(baseURLBlink + layerURL, X, Y, {
+                        AlphaMasks: masks,
+                        Alpha: opacity,
+                        Invert: inverted,
+                        Mirror: mirrored,
+                        BlendingMode: blendingMode,
+                    });
+                }
+                //console.log(baseURL + layerURL, X, Y, { AlphaMasks: masks, Alpha: opacity, Invert: inverted, Mirror: mirrored, BlendingMode: blendingMode });
+            }
 
-			// After drawing hook, receives all processed data.
-			// CAREFUL! The dynamic function should not contain heavy computations, and should not have any side effects.
-			// Watch out for object references.
-			if (asset.DynamicAfterDraw && (!Player.GhostList || Player.GhostList.indexOf(C.MemberNumber) == -1)) {
-				/** @type {DynamicDrawingData} */
-				const DrawingData = {
-					C,
-					X,
-					Y,
-					CA: item,
-					GroupName: groupName,
-					Property: item.Property,
-					Color: layerColor,
-					Opacity: opacity,
-					A: asset,
-					G: parentAssetName,
-					AG: group,
-					L: layerSegment,
-					Pose: pose,
-					LayerType: layerType,
-					BlinkExpression: blinkExpressionSegment,
-					drawCanvas,
-					drawCanvasBlink,
-					AlphaMasks: masks,
-					PersistentData: () => AnimationPersistentDataGet(C, asset),
-				};
-				CommonCallFunctionByNameWarn(`Assets${asset.Group.Name}${asset.Name}AfterDraw`, DrawingData);
-			}
-		}
-	});
+            // After drawing hook, receives all processed data.
+            // CAREFUL! The dynamic function should not contain heavy computations, and should not have any side effects.
+            // Watch out for object references.
+            if (asset.DynamicAfterDraw && (!Player.GhostList || Player.GhostList.indexOf(C.MemberNumber) == -1)) {
+                /** @type {DynamicDrawingData} */
+                const DrawingData = {
+                    C,
+                    X,
+                    Y,
+                    CA: item,
+                    GroupName: groupName,
+                    Property: item.Property,
+                    Color: layerColor,
+                    Opacity: opacity,
+                    A: asset,
+                    G: parentAssetName,
+                    AG: group,
+                    L: layerSegment,
+                    Pose: pose,
+                    LayerType: layerType,
+                    BlinkExpression: blinkExpressionSegment,
+                    drawCanvas,
+                    drawCanvasBlink,
+                    AlphaMasks: masks,
+                    PersistentData: () => AnimationPersistentDataGet(C, asset),
+                };
+                CommonCallFunctionByNameWarn(`Assets${asset.Group.Name}${asset.Name}AfterDraw`, DrawingData);
+            }
+        }
+    });
 })();
