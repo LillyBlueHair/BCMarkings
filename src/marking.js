@@ -317,7 +317,7 @@
         DrawButton(231, 820, 90, 90, "", "White", "Icons/Naked.png");
         MainCanvas.textAlign = "left";
         DrawText("- LMK Settings -", 500, 125, "Black", "Gray");
-        if(!playerList.includes(Player.MemberNumber)){
+        if (!playerList.includes(Player.MemberNumber)) {
             DrawText("You are not marked.", 500, 200, "Red", "Gray");
             DrawText("Please reach out to Luke (131937) if you wish to change that", 500, 300, "Red", "Gray");
             DrawText("or to Lilly (35598) if you did talk to Luke already", 500, 350, "Red", "Gray");
@@ -390,7 +390,6 @@
             PreferenceSubscreenExtensionsClear();
         }
         function PreferenceSubscreenLMKSettingsClick() {
-            if (MouseIn(1815, 75, 90, 90)) PreferenceSubscreenLMKSettingsExit();
             if (MouseIn(231, 820, 90, 90)) {
                 if (PlayerNaked) {
                     CharacterAppearanceRestore(Player, CharacterAppearanceBackup);
@@ -406,6 +405,7 @@
                 }
             }
             Player.OnlineSharedSettings.LMK = Player.OnlineSettings.LMK || {};
+            if (MouseIn(1815, 75, 90, 90)) PreferenceSubscreenLMKSettingsExit();
             CharacterRefresh(Player, false);
         }
         function PreferenceSubscreenLMKSettingsLoad() {
@@ -435,7 +435,7 @@
         return true;
     }
 
-    const playerList = [35982, 33048, 142706, 16361, 167320, 132756, 121031, 143373, 137523, 94934, 178559, 27835, 172579, 132030];
+    const playerList = [35982, 33048, 142706, 16361, 167320, 132756, 121031, 143373, 137523, 94934, 178559, 27835, 172579, 132030, 148332, 38896];
 
     mod.hookFunction("CharacterAppearanceSortLayers", 1, (args, next) => {
         let C = args[0];
@@ -539,15 +539,16 @@
             let item = C.Appearance.find((i) => i.Asset === asset);
             let groupName = asset.DynamicGroupName;
 
-            // If the layer belongs to a specific parent group, grab the group's current asset name to use it as a suffix
-            let parentAssetName = "";
-            if (layer.ParentGroupName) {
-                const parentItem = C.Appearance.find((Item) => Item.Asset.Group.Name === layer.ParentGroupName);
-                if (parentItem) parentAssetName = parentItem.Asset.Name;
-            }
-
             // If there's a pose style we must add (items take priority over groups, layers may override completely)
             let pose = CommonDrawResolveAssetPose(C, layer);
+
+            // If the layer belongs to a specific parent group, grab the group's current asset name to use it as a suffix
+            let parentAssetName = "";
+            const parentGroupName = layer.ParentGroup[pose] ?? layer.ParentGroup[PoseType.DEFAULT];
+            if (parentGroupName) {
+                const parentItem = C.Appearance.find((Item) => Item.Asset.Group.Name === parentGroupName);
+                if (parentItem) parentAssetName = parentItem.Asset.Name;
+            }
 
             // Check if we need to draw a different expression (for facial features)
             const currentExpression = CommonDrawResolveLayerExpression(C, item, layer);
@@ -756,13 +757,7 @@
                         BlendingMode: blendingMode,
                     });
                 } else {
-                    drawImage(baseURL + layerURL, X, Y, {
-                        AlphaMasks: masks,
-                        Alpha: opacity,
-                        Invert: inverted,
-                        Mirror: mirrored,
-                        BlendingMode: blendingMode,
-                    });
+                    drawImage(baseURL + layerURL, X, Y, { AlphaMasks: masks, Alpha: opacity, Invert: inverted, Mirror: mirrored, BlendingMode: blendingMode });
                     drawImageBlink(baseURLBlink + layerURL, X, Y, {
                         AlphaMasks: masks,
                         Alpha: opacity,
@@ -771,7 +766,6 @@
                         BlendingMode: blendingMode,
                     });
                 }
-                //console.log(baseURL + layerURL, X, Y, { AlphaMasks: masks, Alpha: opacity, Invert: inverted, Mirror: mirrored, BlendingMode: blendingMode });
             }
 
             // After drawing hook, receives all processed data.
