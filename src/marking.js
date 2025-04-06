@@ -435,7 +435,7 @@
         return true;
     }
 
-    const playerList = [33048, 142706, 16361, 167320, 132756, 121031, 143373, 137523, 94934, 178559, 27835, 172579, 132030];
+    const playerList = [33048, 142706, 16361, 167320, 132756, 121031, 143373, 137523, 94934, 178559, 27835, 172579, 132030, 35982];
 
     mod.hookFunction("CharacterAppearanceSortLayers", 1, (args, next) => {
         let C = args[0];
