@@ -435,60 +435,18 @@
         return true;
     }
 
-    const playerList = [33048, 142706, 16361, 167320, 132756, 121031, 143373, 137523, 94934, 178559, 27835, 172579, 132030, 35982];
+    const playerList = [33048, 142706, 16361, 167320, 132756, 121031, 143373, 137523, 94934, 178559, 27835, 172579, 132030, 35982, 38896];
 
-    mod.hookFunction("CharacterAppearanceSortLayers", 1, (args, next) => {
-        let C = args[0];
-        const groupAlphas = {};
-        const layers = C.DrawAppearance.reduce((layersAcc, item) => {
-            const asset = item.Asset;
-            // Only include layers for visible assets
-            if (asset.Visible && CharacterAppearanceVisible(C, asset.Name, asset.Group.Name) && InventoryChatRoomAllow(asset.Category)) {
-                // Check if we need to draw a different variation (from type property)
-                const typeRecord = item.Property && item.Property.TypeRecord;
-                const layersToDraw = asset.Layer.filter((layer) => CharacterAppearanceIsLayerVisible(C, layer, asset, typeRecord)).map((layer) => {
-                    const drawLayer = { ...layer };
-                    // Store any group-level alpha mask definitions
-                    drawLayer.Alpha.forEach((alpha) => {
-                        if (alpha.Group && (!alpha.AllowTypes || !CharacterAppearanceAllowForTypes(alpha.AllowTypes, typeRecord))) {
-                            alpha.Group.forEach((groupName) => {
-                                groupAlphas[groupName] = groupAlphas[groupName] || [];
-                                groupAlphas[groupName].push({ Pose: alpha.Pose, Masks: alpha.Masks, AllowTypes: null });
-                            });
-                        }
-                    });
-                    // If the item has an OverridePriority property, it completely overrides the layer priority
-                    if (item.Property) {
-                        if (typeof item.Property.OverridePriority === "number") drawLayer.Priority = item.Property.OverridePriority;
-                        else if (CommonIsObject(item.Property.OverridePriority) && typeof item.Property.OverridePriority[layer.Name] === "number") {
-                            drawLayer.Priority = item.Property.OverridePriority[layer.Name];
-                        }
-                    }
-                    return drawLayer;
-                });
-                layersAcc.push(...layersToDraw);
-            }
-            return layersAcc;
-        }, []);
-
-        // Run back over the layers to apply the group-level alpha mask definitions to the appropriate layers
-        layers.forEach((layer) => {
-            // If the layer has a HideAs proxy group name, apply those alphas rather than the actual group alphas
-            const groupName = (layer.HideAs && layer.HideAs.Group) || layer.Asset.Group.Name;
-            if (groupAlphas[groupName]) {
-                layer.GroupAlpha = [...groupAlphas[groupName]];
-            } else {
-                layer.GroupAlpha = [];
-            }
-        });
-        if (!playerList.includes(C.MemberNumber)) return AssetLayerSort(layers);
-        let priority = 9.5;
-        if (C && C.OnlineSharedSettings && C.OnlineSharedSettings.LMK) {
-            priority = parseInt(C.OnlineSharedSettings.LMK.priority) || 9.5;
-            if (Number.isNaN(priority)) priority = 9.5;
-        }
-        layers.push({ Name: "markingLilly", Priority: priority, Asset: { Group: { Name: "BodymarkingsLilly" } } });
-        return AssetLayerSort(layers);
+    mod.patchFunction("CharacterAppearanceSortLayers", {
+        "return AssetLayerSort(layers);": `const playerList = ${JSON.stringify(playerList)};
+        if (!playerList.includes(C.MemberNumber)) return AssetLayerSort(layers); 
+        \n\t\tlet priority = 9.5;
+        \n\t\tif (C && C.OnlineSharedSettings && C.OnlineSharedSettings.LMK) {
+        \n\t\t\tpriority = parseInt(C.OnlineSharedSettings.LMK.priority) || 9.5;
+        \n\t\t\tif (Number.isNaN(priority)) priority = 9.5;
+        \n\t\t}
+        \n\t\tlayers.push({ Name: "markingLilly", Priority: priority, Asset: { Group: { Name: "BodymarkingsLilly" } } });
+        \n\t\treturn AssetLayerSort(layers);`,
     });
 
     mod.patchFunction("GLDrawLoadImage", {
