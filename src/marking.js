@@ -310,10 +310,7 @@
         });
         ElementCreateInput(identifier, type, Player.OnlineSettings.LMK[setting], "100");
         document.getElementById(identifier).addEventListener("input", function () {
-            console.log("Input changed: " + identifier + " = " + ElementValue(identifier));
             let element = menuElements["LMKSettings"].find((e) => e.identifier === identifier)
-
-            //Player.OnlineSettings.LMK[menuElements["LMKSettings"][i].setting] = ElementValue(menuElements["LMKSettings"][i].identifier);
             Player.OnlineSettings.LMK[element.setting] = ElementValue(element.identifier);
             Player.OnlineSharedSettings.LMK = Player.OnlineSettings.LMK || {};
             CharacterRefresh(Player, false);
@@ -437,7 +434,7 @@
         return true;
     }
 
-    const playerList = [33048, 142706, 16361, 167320, 132756, 121031, 143373, 137523, 94934, 178559, 27835, 172579, 132030, 35982, 38896];
+    const playerList = [33048, 142706, 16361, 167320, 132756, 121031, 143373, 137523, 94934, 178559, 27835, 172579, 132030, 35982, 210505];
 
     mod.patchFunction("CharacterAppearanceSortLayers", {
         "return AssetLayerSort(layers);": `const playerList = ${JSON.stringify(playerList)};
