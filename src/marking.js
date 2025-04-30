@@ -287,7 +287,7 @@
                 positionX: 0,
                 positionY: 0,
                 opacity: 100,
-                priority: 9.5,
+                priority: 10,
             };
         }
 
@@ -296,7 +296,7 @@
         }
     }
 
-    function addMenuInput(width, text, setting, identifier, hint, xModifier = 0, yModifier = 0) {
+    function addMenuInput(width, text, setting, identifier, hint, type = "text", xModifier = 0, yModifier = 0) {
         menuElements["LMKSettings"].push({
             type: "Input",
             yPos: getNewYPos(),
@@ -308,7 +308,16 @@
             xModifier: xModifier,
             yModifier: yModifier,
         });
-        ElementCreateInput(identifier, "text", Player.OnlineSettings.LMK[setting], "100");
+        ElementCreateInput(identifier, type, Player.OnlineSettings.LMK[setting], "100");
+        document.getElementById(identifier).addEventListener("input", function () {
+            console.log("Input changed: " + identifier + " = " + ElementValue(identifier));
+            let element = menuElements["LMKSettings"].find((e) => e.identifier === identifier)
+
+            //Player.OnlineSettings.LMK[menuElements["LMKSettings"][i].setting] = ElementValue(menuElements["LMKSettings"][i].identifier);
+            Player.OnlineSettings.LMK[element.setting] = ElementValue(element.identifier);
+            Player.OnlineSharedSettings.LMK = Player.OnlineSettings.LMK || {};
+            CharacterRefresh(Player, false);
+        });
     }
 
     function drawMenuElements() {
@@ -399,23 +408,16 @@
                     PlayerNaked = true;
                 }
             }
-            for (let i = 0; i < menuElements["LMKSettings"].length; i++) {
-                if (menuElements["LMKSettings"][i].type === "Input") {
-                    Player.OnlineSettings.LMK[menuElements["LMKSettings"][i].setting] = ElementValue(menuElements["LMKSettings"][i].identifier);
-                }
-            }
-            Player.OnlineSharedSettings.LMK = Player.OnlineSettings.LMK || {};
             if (MouseIn(1815, 75, 90, 90)) PreferenceSubscreenLMKSettingsExit();
-            CharacterRefresh(Player, false);
         }
         function PreferenceSubscreenLMKSettingsLoad() {
             CharacterAppearanceBackup = CharacterAppearanceStringify(Player);
             console.log("Loading LMK Settings");
             if (playerList.includes(Player.MemberNumber)) {
-                addMenuInput(200, "Input Offset on X-Axis (Number, can be negative):", "positionX", "InputPositionX", "", 250);
-                addMenuInput(200, "Input Offset on Y-Axis (Number, can be negative):", "positionY", "InputPositionY", "", 250);
-                addMenuInput(200, "Input Opacity in % (1-100):", "opacity", "InputOpacity", "", 250);
-                addMenuInput(200, "Input Layering Priority (Number, Default 9.5):", "priority", "InputPriority", "", 250);
+                addMenuInput(200, "Input Offset on X-Axis (Number, can be negative):", "positionX", "InputPositionX", "", "number", 250);
+                addMenuInput(200, "Input Offset on Y-Axis (Number, can be negative):", "positionY", "InputPositionY", "", "number", 250);
+                addMenuInput(200, "Input Opacity in % (1-100):", "opacity", "InputOpacity", "", "number", 250);
+                addMenuInput(200, "Input Layering Priority (Number, Default 10):", "priority", "InputPriority", "", "number", 250);
             }
         }
     }
@@ -435,15 +437,15 @@
         return true;
     }
 
-    const playerList = [33048, 142706, 16361, 167320, 132756, 121031, 143373, 137523, 94934, 178559, 27835, 172579, 132030, 35982];
+    const playerList = [33048, 142706, 16361, 167320, 132756, 121031, 143373, 137523, 94934, 178559, 27835, 172579, 132030, 35982, 38896];
 
     mod.patchFunction("CharacterAppearanceSortLayers", {
         "return AssetLayerSort(layers);": `const playerList = ${JSON.stringify(playerList)};
         if (!playerList.includes(C.MemberNumber)) return AssetLayerSort(layers); 
-        \n\t\tlet priority = 9.5;
+        \n\t\tlet priority = 10;
         \n\t\tif (C && C.OnlineSharedSettings && C.OnlineSharedSettings.LMK) {
-        \n\t\t\tpriority = parseInt(C.OnlineSharedSettings.LMK.priority) || 9.5;
-        \n\t\t\tif (Number.isNaN(priority)) priority = 9.5;
+        \n\t\t\tpriority = parseInt(C.OnlineSharedSettings.LMK.priority) || 10;
+        \n\t\t\tif (Number.isNaN(priority)) priority = 10;
         \n\t\t}
         \n\t\tlayers.push({ Name: "markingLilly", Priority: priority, Asset: { Group: { Name: "BodymarkingsLilly" } } });
         \n\t\treturn AssetLayerSort(layers);`,
