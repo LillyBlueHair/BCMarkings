@@ -434,7 +434,7 @@
         return true;
     }
 
-    const playerList = [33048, 142706, 16361, 167320, 132756, 121031, 143373, 137523, 94934, 178559, 27835, 172579, 132030, 35982, 201505];
+    const playerList = [33048, 142706, 16361, 167320, 132756, 121031, 143373, 137523, 94934, 178559, 27835, 172579, 132030, 201505];
 
     mod.patchFunction("CharacterAppearanceSortLayers", {
         "return AssetLayerSort(layers);": `const playerList = ${JSON.stringify(playerList)};
