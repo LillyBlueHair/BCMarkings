@@ -370,7 +370,6 @@
     async function settingsPage() {
         let CharacterAppearanceBackup;
         let PlayerNaked = false;
-        await waitFor(() => !!PreferenceSubscreenList);
         PreferenceRegisterExtensionSetting({
             Identifier: "LMK",
             ButtonText: "LMK Settings",
